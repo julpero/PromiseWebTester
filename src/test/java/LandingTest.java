@@ -56,9 +56,9 @@ public class LandingTest {
         } catch (Throwable t) {
             takeScreenshot("TestLandingPage_ERROR");
             throw t;
+        } finally {
+            if (driver != null) driver.quit();
         }
-
-        driver.quit();
     }
 
     @Test
@@ -90,9 +90,9 @@ public class LandingTest {
         } catch (Throwable t) {
             takeScreenshot("TestReportPage_ERROR");
             throw t;
+        } finally {
+            if (driver != null) driver.quit();
         }
-
-        driver.quit();
     }
 
     @Test
@@ -165,9 +165,9 @@ public class LandingTest {
         } catch (Throwable t) {
             takeScreenshot("TestNickChangePage_ERROR");
             throw t;
+        } finally {
+            if (driver != null) driver.quit();
         }
-
-        driver.quit();
     }
 
     @Test
@@ -179,70 +179,86 @@ public class LandingTest {
             final String pageTitle = driver.getTitle();
             assertEquals("promiseweb - Promise Card Game", pageTitle, "FAIL: page title not equal!");
 
-//            int gamesBefore = CountOpenGames();
-
             List<TestPlayer> testPlayers = getTestPlayers();
             CreateBaseGame(testPlayers.get(0));
-//            int gamesAfter = CountOpenGames();
-//            assertEquals(gamesBefore, gamesAfter-1, "FAIL: game count doesn't match!");
             LeaveBaseGame(testPlayers.get(0));
-//            int gamesFinal = CountOpenGames();
-//            assertEquals(gamesBefore, gamesFinal, "FAIL: game count doesn't match!");
 
             System.out.println("CreateAndDeleteGame SUCCESS");
         } catch (Throwable t) {
             takeScreenshot("CreateAndDeleteGame_ERROR");
             throw t;
+        } finally {
+            if (driver != null) driver.quit();
         }
-
-        driver.quit();
     }
 
     @Test
     public void PlayBaseGame() throws InterruptedException {
         try {
             System.out.println("PlayBaseGame starts");
+            final List<TestPlayer> testPlayers = getTestPlayers();
+            final int initSleepTime = 3000;
+            final boolean[] weHaveError = {false};
+            final String[] errorText = new String[1];
 
-            List<TestPlayer> testPlayers = getTestPlayers();
-            Thread player1 = new Thread(new Player(testPlayers.get(0)), "player1Thread");
+            final Thread player1 = new Thread(new Player(testPlayers.get(0)), "player1Thread");
             Thread.sleep(5000);
-            Thread player2 = new Thread(new Player(testPlayers.get(1)), "player2Thread");
+            final Thread player2 = new Thread(new Player(testPlayers.get(1)), "player2Thread");
             Thread.sleep(5000);
-            Thread player3 = new Thread(new Player(testPlayers.get(2)), "player3Thread");
+            final Thread player3 = new Thread(new Player(testPlayers.get(2)), "player3Thread");
+
+            Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread th, Throwable ex) {
+                    System.out.println("Uncaught exception: " + ex);
+                    weHaveError[0] = true;
+                    errorText[0] = ex.toString();
+                }
+            };
+
+            player1.setUncaughtExceptionHandler(h);
+            player2.setUncaughtExceptionHandler(h);
+            player3.setUncaughtExceptionHandler(h);
+
             Thread.sleep(5000);
 
             player1.start();
+            Thread.sleep(initSleepTime);
             player2.start();
+            Thread.sleep(initSleepTime);
             player3.start();
+            Thread.sleep(initSleepTime);
+
+            final int sleepTime = 5000;
+            int rounds = 1;
+            boolean gameIsOn = player1.isAlive() && player2.isAlive() && player3.isAlive();
+            while (gameIsOn) {
+                Thread.sleep(sleepTime);
+                System.out.println("Game has been on "+rounds*sleepTime/1000+" seconds");
+                gameIsOn = player1.isAlive() && player2.isAlive() && player3.isAlive();
+                if (!gameIsOn) {
+                    System.out.println("Game is OFF");
+                    // wait few seconds so all threads will be ready
+                    Thread.sleep(5000);
+                }
+                rounds++;
+            }
+            while (player1.isAlive() || player2.isAlive() || player3.isAlive()) {
+                if (player1.isAlive()) System.out.println(" player1 still alive...");
+                if (player2.isAlive()) System.out.println(" player2 still alive...");
+                if (player3.isAlive()) System.out.println(" player3 still alive...");
+                System.out.println("Waiting all threads to end...");
+                Thread.sleep(5000);
+            }
+            if (weHaveError[0]) {
+                throw new InterruptedException("ERRORIA PUKKAA: "+ errorText[0]);
+            }
 
             System.out.println("PlayBaseGame SUCCESS");
-        } catch (Exception t) {
-            throw t;
-        }
-
-    }
-
-    private int CountOpenGames() {
-        // check if list is open
-        if (driver.findElement(By.id("joinGameCollapse")).getText().contains("no open games")) {
-            driver.findElement(By.id("openJoinGameDialogButton")).click();
-            return 0;
-        }
-        List<WebElement> games = driver.findElements(By.className("gameContainerDiv"));
-        if (games.size() > 0) {
-            driver.findElement(By.id("openJoinGameDialogButton")).click();
-            return games.size();
-        }
-
-        // if we are here then list is not open -> click button
-        driver.findElement(By.id("openJoinGameDialogButton")).click();
-        try {
-            wait.until(visibilityOfElementLocated(By.className("gameContainerDiv")));
-            games = driver.findElements(By.className("gameContainerDiv"));
-            driver.findElement(By.id("openJoinGameDialogButton")).click();
-            return games.size();
+        } catch (Exception r) {
+            throw r;
         } catch (Throwable t) {
-            return 0;
+            throw t;
         }
     }
 
