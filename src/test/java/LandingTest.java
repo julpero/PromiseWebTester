@@ -171,7 +171,7 @@ public class LandingTest {
     @Test
     public void CreateAndLeaveGame() {
         try {
-            System.out.println("CreateAndDeleteGame starts");
+            System.out.println("CreateAndLeaveGame starts");
             initWebDriverToChrome();
             driver.get("http://localhost:3000");
             final String pageTitle = driver.getTitle();
@@ -181,9 +181,9 @@ public class LandingTest {
             CreateBaseGame(testPlayers.get(0));
             LeaveBaseGame(testPlayers.get(0));
 
-            System.out.println("CreateAndDeleteGame SUCCESS");
+            System.out.println("CreateAndLeaveGame SUCCESS");
         } catch (Throwable t) {
-            takeScreenshot("CreateAndDeleteGame_ERROR");
+            takeScreenshot("CreateAndLeaveGame_ERROR");
             throw t;
         } finally {
             if (driver != null) driver.quit();
@@ -293,8 +293,13 @@ public class LandingTest {
             List<WebElement> games = driver.findElements(By.className("gameContainerDiv"));
             if (games.size() == 0) {
                 // try if list is not open
-                driver.findElement(By.id("openJoinGameDialogButton")).click();
-                wait.until(presenceOfElementLocated(By.className("gameContainerRow")));
+                try {
+                    driver.findElement(By.id("openJoinGameDialogButton")).click();
+                    wait.until(presenceOfElementLocated(By.className("gameContainerRow")));
+                } catch (Exception e) {
+                    driver.findElement(By.id("openJoinGameDialogButton")).click();
+                    wait.until(presenceOfElementLocated(By.className("gameContainerRow")));
+                }
                 games = driver.findElements(By.className("gameContainerRow"));
                 assertTrue(games.size() > 0, "FAIL: No open games!");
                 for (int i = 0; i < games.size(); i++) {

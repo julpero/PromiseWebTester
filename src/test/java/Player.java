@@ -64,7 +64,7 @@ public class Player implements Runnable {
                 actions.moveToElement(createButton);
                 createButton.click();
                 System.out.println("PLAYER "+this.testPlayer.username+" created game");
-                takeScreenshot("CREATED_GAME__"+this.testPlayer.username);
+                takeScreenshot("CREATED_GAME_"+this.testPlayer.username);
             } else {
                 // join game
                 driver.findElement(By.id("openJoinGameDialogButton")).click();
@@ -79,9 +79,9 @@ public class Player implements Runnable {
                         game.findElement(By.className("newGameMyNameInput")).sendKeys(testPlayer.username);
                         game.findElement(By.className("newGameMyPass1")).sendKeys(testPlayer.password);
                         game.findElement(By.className("newGameMyPass2")).sendKeys(testPlayer.password);
-                        driver.findElement(By.className("joinThisGameButton")).click();
+                        game.findElement(By.className("joinThisGameButton")).click();
                         System.out.println("PLAYER "+this.testPlayer.username+" joined game");
-                        takeScreenshot("JOINED_GAME__"+this.testPlayer.username);
+                        takeScreenshot("JOINED_GAME_"+this.testPlayer.username);
                         return;
                     }
                 }
