@@ -1,31 +1,22 @@
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.chrome.ChromeOptions.*;
-import org.openqa.selenium.edge.EdgeDriver;
-import org.openqa.selenium.edge.EdgeOptions;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.ie.InternetExplorerDriver;
-import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.io.FileHandler;
-import org.openqa.selenium.safari.SafariDriver;
-import org.openqa.selenium.safari.SafariOptions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,6 +28,9 @@ public class LandingTest {
     public WebDriverWait shortWait;
     public WebDriverWait wait;
     public WebDriverWait longWait;
+
+    private String adminUser = "";
+    private String adminPass = "";
 
     @Test
     public void TestLandingPage() {
@@ -96,7 +90,7 @@ public class LandingTest {
     }
 
     @Test
-    public void TestNickChangePage() {
+    public void TestNickChangePage() throws IOException {
         try {
             System.out.println("TestNickChangePage starts");
             initWebDriverToChrome();
@@ -122,10 +116,11 @@ public class LandingTest {
 //            driver.findElement(By.className("close-alert-button")).click();
 
             // correct credentials
+            readAdminKeys();
             longWait.until(visibilityOfElementLocated(By.id("adminUser"))).clear();
-            longWait.until(visibilityOfElementLocated(By.id("adminUser"))).sendKeys(AdminCredentials.adminUser);
+            longWait.until(visibilityOfElementLocated(By.id("adminUser"))).sendKeys(this.adminUser);
             longWait.until(visibilityOfElementLocated(By.id("adminPass"))).clear();
-            longWait.until(visibilityOfElementLocated(By.id("adminPass"))).sendKeys(AdminCredentials.adminPass);
+            longWait.until(visibilityOfElementLocated(By.id("adminPass"))).sendKeys(this.adminPass);
             driver.findElement(By.id("getGamesForNickChangeButton")).click();
 
             longWait.until(visibilityOfElementLocated(By.className("game-container-div")));
@@ -162,6 +157,9 @@ public class LandingTest {
             }
 
             System.out.println("TestNickChangePage SUCCESS");
+        } catch (IOException i) {
+            System.out.println("ERROR reading admin credentials");
+            throw i;
         } catch (Throwable t) {
             takeScreenshot("TestNickChangePage_ERROR");
             throw t;
@@ -336,5 +334,25 @@ public class LandingTest {
         testPlayers.add(new TestPlayer("Demoilija", "demoTestaaja"));
         testPlayers.add(new TestPlayer("E2E-kaveri", "demoTestaaja"));
         return testPlayers;
+    }
+
+    private void readAdminKeys() throws IOException {
+        InputStream inputStream;
+        try {
+            Properties prop = new Properties();
+            final String propFileName = "admin.properties";
+            inputStream = getClass().getClassLoader().getResourceAsStream(propFileName);
+            if (inputStream != null) {
+                prop.load(inputStream);
+                inputStream.close();
+                this.adminUser = prop.getProperty("ADMINUSER");
+                this.adminPass = prop.getProperty("ADMINPASS");
+            } else {
+                throw new FileNotFoundException("admin secrets file "+propFileName+" not found!");
+            }
+        } catch (Exception e) {
+            System.out.println("Exception: " + e);
+            throw e;
+        }
     }
 }
