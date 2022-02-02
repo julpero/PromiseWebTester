@@ -199,11 +199,15 @@ public class LandingTest {
             final boolean[] weHaveError = {false};
             final String[] errorText = new String[1];
 
-            final Thread player1 = new Thread(new Player(testPlayers.get(0)), "player1Thread");
+            final Thread player1 = new Thread(new Player(testPlayers.get(0), 1, testPlayers.size()), "player1Thread");
             Thread.sleep(5000);
             final Thread player2 = new Thread(new Player(testPlayers.get(1)), "player2Thread");
             Thread.sleep(5000);
             final Thread player3 = new Thread(new Player(testPlayers.get(2)), "player3Thread");
+            Thread.sleep(5000);
+            final Thread player4 = new Thread(new Player(testPlayers.get(3)), "player4Thread");
+            Thread.sleep(5000);
+            final Thread player5 = new Thread(new Player(testPlayers.get(4)), "player5Thread");
 
             Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
                 @Override
@@ -217,6 +221,8 @@ public class LandingTest {
             player1.setUncaughtExceptionHandler(h);
             player2.setUncaughtExceptionHandler(h);
             player3.setUncaughtExceptionHandler(h);
+            player4.setUncaughtExceptionHandler(h);
+            player5.setUncaughtExceptionHandler(h);
 
             Thread.sleep(5000);
 
@@ -226,14 +232,18 @@ public class LandingTest {
             Thread.sleep(initSleepTime);
             player3.start();
             Thread.sleep(initSleepTime);
+            player4.start();
+            Thread.sleep(initSleepTime);
+            player5.start();
+            Thread.sleep(initSleepTime);
 
             final int sleepTime = 5000;
             int rounds = 1;
-            boolean gameIsOn = player1.isAlive() && player2.isAlive() && player3.isAlive();
+            boolean gameIsOn = player1.isAlive() && player2.isAlive() && player3.isAlive() && player4.isAlive() && player5.isAlive();
             while (gameIsOn) {
                 Thread.sleep(sleepTime);
                 System.out.println("Game has been on "+rounds*sleepTime/1000+" seconds");
-                gameIsOn = player1.isAlive() && player2.isAlive() && player3.isAlive();
+                gameIsOn = player1.isAlive() && player2.isAlive() && player3.isAlive() && player4.isAlive() && player5.isAlive();
                 if (!gameIsOn) {
                     System.out.println("Game is OFF");
                     // wait few seconds so all threads will be ready
@@ -241,10 +251,12 @@ public class LandingTest {
                 }
                 rounds++;
             }
-            while (player1.isAlive() || player2.isAlive() || player3.isAlive()) {
+            while (player1.isAlive() || player2.isAlive() || player3.isAlive() || player4.isAlive() || player5.isAlive()) {
                 if (player1.isAlive()) System.out.println(" player1 still alive...");
                 if (player2.isAlive()) System.out.println(" player2 still alive...");
                 if (player3.isAlive()) System.out.println(" player3 still alive...");
+                if (player4.isAlive()) System.out.println(" player4 still alive...");
+                if (player5.isAlive()) System.out.println(" player5 still alive...");
                 System.out.println("Waiting all threads to end...");
                 Thread.sleep(5000);
             }
@@ -333,6 +345,8 @@ public class LandingTest {
         testPlayers.add(new TestPlayer("Testaaja", "demoTestaaja"));
         testPlayers.add(new TestPlayer("Demoilija", "demoTestaaja"));
         testPlayers.add(new TestPlayer("E2E-kaveri", "demoTestaaja"));
+        testPlayers.add(new TestPlayer("KOM-puutteri", "demoTestaaja"));
+        testPlayers.add(new TestPlayer("Aku Ankka", "demoTestaaja"));
         return testPlayers;
     }
 

@@ -3,6 +3,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.io.FileHandler;
+import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
@@ -25,7 +26,7 @@ public class Player implements Runnable {
 
     public TestPlayer testPlayer;
 
-    public Player(TestPlayer testPlayer, int gameMode) {
+    public Player(TestPlayer testPlayer, int gameMode, int playerCount) {
         this.testPlayer = testPlayer;
 
         initWebDriverToChrome();
@@ -37,11 +38,26 @@ public class Player implements Runnable {
                 // create game
                 driver.findElement(By.id("openCreateGameFormButton")).click();
                 shortWait.until(visibilityOfElementLocated(By.id("newGameMyName"))).isEnabled();
+                if (playerCount > 3) {
+                    Select playerSelect = new Select(driver.findElement(By.id("newGameHumanPlayersCount")));
+                    playerSelect.selectByVisibleText(""+playerCount);
+                }
                 driver.findElement(By.id("newGameMyName")).sendKeys(testPlayer.username);
                 driver.findElement(By.id("password1")).sendKeys(testPlayer.password);
                 driver.findElement(By.id("password2")).sendKeys(testPlayer.password);
                 if (gameMode != 0) {
                     System.out.println(gameMode);
+                    Select startRound = new Select(driver.findElement(By.id("newGameStartRound")));
+                    Select turnRound = new Select(driver.findElement(By.id("newGameTurnRound")));
+                    Select endRound = new Select(driver.findElement(By.id("newGameEndRound")));
+                    switch (gameMode) {
+                        case 1:
+                            // 6-5-6 -game
+                            startRound.selectByVisibleText("6");
+                            turnRound.selectByVisibleText("5");
+                            endRound.selectByVisibleText("6");
+                            break;
+                    }
                 }
                 WebElement createButton = shortWait.until(presenceOfElementLocated(By.id("createNewGameButton")));
                 Actions actions = new Actions(driver);
@@ -78,7 +94,7 @@ public class Player implements Runnable {
     }
 
     public Player(TestPlayer testPlayer) {
-        this(testPlayer, 0);
+        this(testPlayer, 0, 3);
     }
 
 
