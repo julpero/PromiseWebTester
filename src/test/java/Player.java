@@ -26,13 +26,13 @@ public class Player implements Runnable {
 
     public TestPlayer testPlayer;
 
-    public Player(TestPlayer testPlayer, int gameMode, int playerCount) {
+    public Player(TestPlayer testPlayer, String gameUrl, int gameMode, int playerCount) {
         this.testPlayer = testPlayer;
 
         initWebDriverToChrome();
 
         try {
-            driver.get("http://localhost:3000");
+            driver.get(gameUrl);
             System.out.println("PLAYER "+this.testPlayer.username+" init");
             if (testPlayer.username.equals("Testaaja")) {
                 // create game
@@ -93,8 +93,8 @@ public class Player implements Runnable {
         }
     }
 
-    public Player(TestPlayer testPlayer) {
-        this(testPlayer, 0, 3);
+    public Player(TestPlayer testPlayer, String gameUrl) {
+        this(testPlayer, gameUrl, 0, 3);
     }
 
 

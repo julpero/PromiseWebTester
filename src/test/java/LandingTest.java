@@ -31,13 +31,16 @@ public class LandingTest {
 
     private String adminUser = "";
     private String adminPass = "";
+    
+    final private String gameUrl = "http://localhost:3000";
+    //final private String gameUrl = "https://promiseweb.azurewebsites.net";
 
     @Test
     public void TestLandingPage() {
         try {
             System.out.println("TestLandingPage starts");
             initWebDriverToChrome();
-            driver.get("http://localhost:3000");
+            driver.get(gameUrl);
             final String pageTitle = driver.getTitle();
             assertEquals("promiseweb - Promise Card Game", pageTitle, "FAIL: page title not equal!");
 
@@ -173,7 +176,7 @@ public class LandingTest {
         try {
             System.out.println("CreateAndLeaveGame starts");
             initWebDriverToChrome();
-            driver.get("http://localhost:3000");
+            driver.get(gameUrl);
             final String pageTitle = driver.getTitle();
             assertEquals("promiseweb - Promise Card Game", pageTitle, "FAIL: page title not equal!");
 
@@ -199,15 +202,15 @@ public class LandingTest {
             final boolean[] weHaveError = {false};
             final String[] errorText = new String[1];
 
-            final Thread player1 = new Thread(new Player(testPlayers.get(0), 1, testPlayers.size()), "player1Thread");
+            final Thread player1 = new Thread(new Player(testPlayers.get(0), gameUrl, 1, testPlayers.size()), "player1Thread");
             Thread.sleep(5000);
-            final Thread player2 = new Thread(new Player(testPlayers.get(1)), "player2Thread");
+            final Thread player2 = new Thread(new Player(testPlayers.get(1), gameUrl), "player2Thread");
             Thread.sleep(5000);
-            final Thread player3 = new Thread(new Player(testPlayers.get(2)), "player3Thread");
+            final Thread player3 = new Thread(new Player(testPlayers.get(2), gameUrl), "player3Thread");
             Thread.sleep(5000);
-            final Thread player4 = new Thread(new Player(testPlayers.get(3)), "player4Thread");
+            final Thread player4 = new Thread(new Player(testPlayers.get(3), gameUrl), "player4Thread");
             Thread.sleep(5000);
-            final Thread player5 = new Thread(new Player(testPlayers.get(4)), "player5Thread");
+            final Thread player5 = new Thread(new Player(testPlayers.get(4), gameUrl), "player5Thread");
 
             Thread.UncaughtExceptionHandler h = new Thread.UncaughtExceptionHandler() {
                 @Override
@@ -251,14 +254,19 @@ public class LandingTest {
                 }
                 rounds++;
             }
-            while (player1.isAlive() || player2.isAlive() || player3.isAlive() || player4.isAlive() || player5.isAlive()) {
+            final int maxWaitSeconds = 120;
+            rounds = 0;
+            while (rounds*sleepTime/1000 < maxWaitSeconds &&
+                (player1.isAlive() || player2.isAlive() || player3.isAlive() || player4.isAlive() || player5.isAlive()))
+            {
                 if (player1.isAlive()) System.out.println(" player1 still alive...");
                 if (player2.isAlive()) System.out.println(" player2 still alive...");
                 if (player3.isAlive()) System.out.println(" player3 still alive...");
                 if (player4.isAlive()) System.out.println(" player4 still alive...");
                 if (player5.isAlive()) System.out.println(" player5 still alive...");
                 System.out.println("Waiting all threads to end...");
-                Thread.sleep(5000);
+                Thread.sleep(sleepTime);
+                rounds++;
             }
             if (weHaveError[0]) {
                 throw new InterruptedException("ERRORIA PUKKAA: "+ errorText[0]);
