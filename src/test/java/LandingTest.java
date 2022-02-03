@@ -18,8 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.openqa.selenium.support.ui.ExpectedConditions.*;
 
 public class LandingTest {
@@ -107,7 +106,6 @@ public class LandingTest {
             // first without login credentials
             driver.findElement(By.id("getGamesForNickChangeButton")).click();
             wait.until(visibilityOfElementLocated(By.id("authAlertDiv")));
-//            driver.findElement(By.className("close-alert-button")).click();
 
             // try with nonsense
             longWait.until(visibilityOfElementLocated(By.id("adminUser"))).clear();
@@ -116,7 +114,6 @@ public class LandingTest {
             longWait.until(visibilityOfElementLocated(By.id("adminPass"))).sendKeys("juupaduupa");
             driver.findElement(By.id("getGamesForNickChangeButton")).click();
             wait.until(visibilityOfElementLocated(By.id("authAlertDiv")));
-//            driver.findElement(By.className("close-alert-button")).click();
 
             // correct credentials
             readAdminKeys();
@@ -165,6 +162,75 @@ public class LandingTest {
             throw i;
         } catch (Throwable t) {
             takeScreenshot("TestNickChangePage_ERROR");
+            throw t;
+        } finally {
+            if (driver != null) driver.quit();
+        }
+    }
+
+    @Test
+    public void DeleteNotStartedGame() throws IOException, InterruptedException {
+        try {
+            System.out.println("DeleteNotStartedGame starts");
+            initWebDriverToChrome();
+            driver.get(gameUrl);
+            final String pageTitle = driver.getTitle();
+            assertEquals("promiseweb - Promise Card Game", pageTitle, "FAIL: page title not equal!");
+
+            longWait.until(visibilityOfElementLocated(By.id("openOngoingGamesDialogButton")));
+            driver.findElement(By.id("openOngoingGamesDialogButton")).click();
+            longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
+            List<WebElement> notStartedGames = driver.findElements(By.className("onGoingGameRowStatus0"));
+            boolean gameFound = false;
+            String gameId = "";
+            for (int i = 0; i < notStartedGames.size(); i++) {
+                final String players = notStartedGames.get(i).findElement(By.className("report-players")).getText();
+                if (players.contains("Testaaja")) {
+                    gameFound = true;
+                    gameId = notStartedGames.get(i).getAttribute("id");
+
+                    // no user - pass set
+                    notStartedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
+
+                    // try with nonsense
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys("juupaduupa");
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys("juupaduupa");
+                    notStartedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
+
+                    // correct credentials
+                    readAdminKeys();
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys(this.adminUser);
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys(this.adminPass);
+                    notStartedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+
+                    // check that deleted game is no more visible
+                    Thread.sleep(5000);
+                    longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
+                    List<WebElement> allGames = driver.findElements(By.className("onGoingGameRow"));
+                    for (int j = 0; j < allGames.size(); j++) {
+                        final String gameId2 = allGames.get(j).getAttribute("id");
+                        assertNotEquals(gameId, gameId2, "FAIL: found deleted game!");
+                    }
+                    break;
+                }
+            }
+
+            if (!gameFound) {
+                System.out.println("No not started games to delete");
+            }
+
+            System.out.println("DeleteNotStartedGame SUCCESS");
+        } catch (IOException i) {
+            System.out.println("ERROR reading admin credentials");
+            throw i;
+        } catch (Throwable t) {
+            takeScreenshot("DeleteNotStartedGame_ERROR");
             throw t;
         } finally {
             if (driver != null) driver.quit();
