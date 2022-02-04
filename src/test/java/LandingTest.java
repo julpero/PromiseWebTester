@@ -216,6 +216,7 @@ public class LandingTest {
                     for (int j = 0; j < allGames.size(); j++) {
                         final String gameId2 = allGames.get(j).getAttribute("id");
                         assertNotEquals(gameId, gameId2, "FAIL: found deleted game!");
+                        System.out.println("Deleted game "+gameId);
                     }
                     break;
                 }
@@ -231,6 +232,151 @@ public class LandingTest {
             throw i;
         } catch (Throwable t) {
             takeScreenshot("DeleteNotStartedGame_ERROR");
+            throw t;
+        } finally {
+            if (driver != null) driver.quit();
+        }
+    }
+
+    @Test
+    public void DeleteOngoingGame() throws IOException, InterruptedException {
+        try {
+            System.out.println("DeleteOngoingGame starts");
+            initWebDriverToChrome();
+            driver.get(gameUrl);
+            final String pageTitle = driver.getTitle();
+            assertEquals("promiseweb - Promise Card Game", pageTitle, "FAIL: page title not equal!");
+
+            longWait.until(visibilityOfElementLocated(By.id("openOngoingGamesDialogButton")));
+            driver.findElement(By.id("openOngoingGamesDialogButton")).click();
+            longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
+            List<WebElement> ongoingGames = driver.findElements(By.className("onGoingGameRowStatus1"));
+            boolean gameFound = false;
+            String gameId = "";
+            for (int i = 0; i < ongoingGames.size(); i++) {
+                final String players = ongoingGames.get(i).findElement(By.className("report-players")).getText();
+                if (players.contains("Testaaja")) {
+                    gameFound = true;
+                    gameId = ongoingGames.get(i).getAttribute("id");
+
+                    // no user - pass set
+                    ongoingGames.get(i).findElement(By.className("deleteGameButton")).click();
+                    wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
+
+                    // try with nonsense
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys("juupaduupa");
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys("juupaduupa");
+                    ongoingGames.get(i).findElement(By.className("deleteGameButton")).click();
+                    wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
+
+                    // correct credentials
+                    readAdminKeys();
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys(this.adminUser);
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys(this.adminPass);
+                    ongoingGames.get(i).findElement(By.className("deleteGameButton")).click();
+
+                    // check that deleted game is now on dismissed games list
+                    Thread.sleep(5000);
+                    longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
+                    List<WebElement> dismissedGames = driver.findElements(By.className("onGoingGameRowStatus99"));
+                    boolean gameFoundAsDismissed = false;
+                    for (int j = 0; j < dismissedGames.size(); j++) {
+                        final String gameId2 = dismissedGames.get(j).getAttribute("id");
+                        if (gameId2.equals(gameId)) {
+                            gameFoundAsDismissed = true;
+                            break;
+                        }
+                    }
+                    assertTrue(gameFoundAsDismissed, "FAIL: didn't found game from dismissed games list!");
+                    System.out.println("Dismissed game "+gameId);
+                    break;
+                }
+            }
+
+            if (!gameFound) {
+                System.out.println("No ongoing games to delete");
+            }
+
+            System.out.println("DeleteOngoingGame SUCCESS");
+        } catch (IOException i) {
+            System.out.println("ERROR reading admin credentials");
+            throw i;
+        } catch (Throwable t) {
+            takeScreenshot("DeleteOngoingGame_ERROR");
+            throw t;
+        } finally {
+            if (driver != null) driver.quit();
+        }
+    }
+
+    @Test
+    public void TotalDeleteDismissedGame() throws IOException, InterruptedException {
+        try {
+            System.out.println("TotalDeleteDismissedGame starts");
+            initWebDriverToChrome();
+            driver.get(gameUrl);
+            final String pageTitle = driver.getTitle();
+            assertEquals("promiseweb - Promise Card Game", pageTitle, "FAIL: page title not equal!");
+
+            longWait.until(visibilityOfElementLocated(By.id("openOngoingGamesDialogButton")));
+            driver.findElement(By.id("openOngoingGamesDialogButton")).click();
+            longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
+            List<WebElement> dismissedGames = driver.findElements(By.className("onGoingGameRowStatus99"));
+            boolean gameFound = false;
+            String gameId = "";
+            for (int i = 0; i < dismissedGames.size(); i++) {
+                final String players = dismissedGames.get(i).findElement(By.className("report-players")).getText();
+                if (players.contains("Testaaja")) {
+                    gameFound = true;
+                    gameId = dismissedGames.get(i).getAttribute("id");
+
+                    // no user - pass set
+                    dismissedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
+
+                    // try with nonsense
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys("juupaduupa");
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys("juupaduupa");
+                    dismissedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
+
+                    // correct credentials
+                    readAdminKeys();
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys(this.adminUser);
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
+                    longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys(this.adminPass);
+                    dismissedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+
+                    // check that deleted game is no more visible
+                    Thread.sleep(5000);
+                    longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
+                    List<WebElement> allGames = driver.findElements(By.className("onGoingGameRow"));
+                    for (int j = 0; j < allGames.size(); j++) {
+                        final String gameId2 = allGames.get(j).getAttribute("id");
+                        assertNotEquals(gameId, gameId2, "FAIL: found deleted game!");
+                    }
+                    System.out.println("Deleted game "+gameId);
+                    break;
+                }
+            }
+
+            if (!gameFound) {
+                System.out.println("No dismissed games to delete");
+            }
+
+            System.out.println("TotalDeleteDismissedGame SUCCESS");
+        } catch (IOException i) {
+            System.out.println("ERROR reading admin credentials");
+            throw i;
+        } catch (Throwable t) {
+            takeScreenshot("TotalDeleteDismissedGame_ERROR");
             throw t;
         } finally {
             if (driver != null) driver.quit();
