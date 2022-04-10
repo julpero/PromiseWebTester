@@ -97,7 +97,6 @@ public class Player implements Runnable {
         this(testPlayer, gameUrl, 0, 3);
     }
 
-
     public void run() {
         System.out.println("PLAYER "+this.testPlayer.username+" starts to play");
         takeScreenshot("GAME_ON_"+this.testPlayer.username);

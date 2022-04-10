@@ -549,13 +549,16 @@ public class LandingTest {
 
     private void initWebDriverToChrome() {
         ChromeOptions options = new ChromeOptions();
+        System.out.println("ChromeOptions initialized");
         options.addArguments("--window-size=1900x1200");
         options.setHeadless(true);
+        System.out.println("ChromeOptions set");
         try{
             driver = new ChromeDriver(options);
         } catch (final Exception e) {
             throw new RuntimeException("Problems in chrome webdriver init", e);
         }
+        System.out.println("WebDriver ready");
         initWaits();
     }
 
