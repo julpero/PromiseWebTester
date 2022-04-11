@@ -14,8 +14,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated;
-import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.openqa.selenium.support.ui.ExpectedConditions.*;
 
 public class Player implements Runnable {
     public WebDriver driver;
@@ -23,6 +23,7 @@ public class Player implements Runnable {
     public WebDriverWait shortWait;
     public WebDriverWait wait;
     public WebDriverWait longWait;
+    public WebDriverWait observeWait;
 
     public TestPlayer testPlayer;
 
@@ -65,7 +66,7 @@ public class Player implements Runnable {
                 createButton.click();
                 System.out.println("PLAYER "+this.testPlayer.username+" created game");
                 takeScreenshot("CREATED_GAME_"+this.testPlayer.username);
-            } else {
+            } else if (!this.testPlayer.observer) {
                 // join game
                 driver.findElement(By.id("openJoinGameDialogButton")).click();
                 wait.until(visibilityOfElementLocated(By.className("gameContainerRow")));
@@ -86,6 +87,28 @@ public class Player implements Runnable {
                     }
                 }
                 System.out.println("PLAYER "+this.testPlayer.username+" didn't found game to join!");
+            } else if (this.testPlayer.observer) {
+                driver.findElement(By.id("openOngoingGamesDialogButton")).click();
+                wait.until(visibilityOfElementLocated(By.id("gamesContainerDiv")));
+                List<WebElement> onGoingGames = driver.findElements(By.className("onGoingGameRowStatus1"));
+                assertTrue(onGoingGames.size() > 0, "FAIL: no ongoing games");
+                for (int i = onGoingGames.size()-1; i >= 0; i--) {
+                    String playersStr = onGoingGames.get(i).findElement(By.className("report-players")).getText();
+                    if (playersStr.contains("Testaaja") && playersStr.contains("Aku Ankka") && playersStr.contains("KOM-puutteri")) {
+                        // first without username and password
+                        // onGoingGames.get(i).findElement(By.className("observeGameButton")).click();
+                        // wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv"))).getText().contains("Authentication error");
+
+                        shortWait.until(visibilityOfElementLocated(By.id("observerName"))).clear();
+                        shortWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys(this.testPlayer.username);
+                        shortWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
+                        shortWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys(this.testPlayer.password);
+                        onGoingGames.get(i).findElement(By.className("observeGameButton")).click();
+                        wait.until(visibilityOfElementLocated(By.id("waitingGameAlertDiv"))).getText().contains("Waiting players to allow");
+                        takeScreenshot("OBSERVE_REQUESTED_"+this.testPlayer.username);
+                        return;
+                    }
+                }
             }
         } catch (Throwable t) {
             takeScreenshot("INIT_ERROR_"+this.testPlayer.username);
@@ -104,41 +127,64 @@ public class Player implements Runnable {
             // get round count
             longWait.until(visibilityOfElementLocated(By.className("scoreboardTableRow")));
             final int rounds = driver.findElements(By.className("scoreboardTableRow")).size();
-            for (int i = 0; i < rounds; i++) {
-                // promise phase
-                longWait.until(visibilityOfElementLocated(By.className("validPromiseButton")));
-                takeScreenshot("ROUND_"+i+"_PROMISE_"+this.testPlayer.username);
-                List<WebElement> promiseButtons = driver.findElements(By.className("validPromiseButton"));
-                int rand = ThreadLocalRandom.current().nextInt(0, promiseButtons.size());
-                final String promiseValue = promiseButtons.get(rand).getText();
-                promiseButtons.get(rand).click();
-                System.out.println("round "+i+", player "+this.testPlayer.username+" promised "+promiseValue);
+            if (this.testPlayer.observer) {
+                // just take some screenshots
+                for (int i = 0; i < rounds; i++) {
+                    observeWait.until(invisibilityOfElementLocated(By.cssSelector("#player0Points"+i+".avgHistory")));
+                    System.out.println("round "+i+" is observed");
+                    takeScreenshot("ROUND_"+i+"_OBSERVED_"+this.testPlayer.username);
+                }
+            } else {
+                for (int i = 0; i < rounds; i++) {
+                    // promise phase
+                    longWait.until(visibilityOfElementLocated(By.className("validPromiseButton")));
+                    takeScreenshot("ROUND_"+i+"_PROMISE_"+this.testPlayer.username);
+                    List<WebElement> promiseButtons = driver.findElements(By.className("validPromiseButton"));
+                    int rand = ThreadLocalRandom.current().nextInt(0, promiseButtons.size());
+                    final String promiseValue = promiseButtons.get(rand).getText();
+                    promiseButtons.get(rand).click();
+                    System.out.println("round "+i+", player "+this.testPlayer.username+" promised "+promiseValue);
 
-                // play cards
-                // first check how many cards are in this round
-                longWait.until(visibilityOfElementLocated(By.cssSelector("#myCardsRowDiv.myCardsRowClass .cardCol .card")));
-                final int cardsInRound = driver.findElements(By.cssSelector("#myCardsRowDiv.myCardsRowClass .cardCol .card")).size();
-                System.out.println("round "+i+" has "+cardsInRound+" cards, player "+this.testPlayer.username);
-                for (int j = 0; j < cardsInRound; j++) {
-                    longWait.until(visibilityOfElementLocated(By.cssSelector("#myCardsRowDiv.myCardsRowClass .cardCol .activeCardInHand")));
-                    longWait.until(visibilityOfElementLocated(By.cssSelector("#playerTable0.thinking-green-div")));
-                    // takeScreenshot("ROUND_"+i+"_PLAY_CARD_"+(j+1)+"_"+this.testPlayer.username);
-                    List<WebElement> playableCards = driver.findElements(By.cssSelector("#myCardsRowDiv.myCardsRowClass .cardCol .activeCardInHand"));
-                    rand = ThreadLocalRandom.current().nextInt(0, playableCards.size());
-                    final String playedCardClass = playableCards.get(rand).getAttribute("class");
-                    System.out.println("round "+i+", card: "+(j+1)+", player "+this.testPlayer.username+" going to play "+playedCardClass);
-                    playableCards.get(rand).click();
-                    System.out.println("round "+i+", card: "+(j+1)+", player "+this.testPlayer.username+" played "+playedCardClass);
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                    // play cards
+                    // first check how many cards are in this round
+                    longWait.until(visibilityOfElementLocated(By.cssSelector("#myCardsRowDiv.myCardsRowClass .cardCol .card")));
+                    final int cardsInRound = driver.findElements(By.cssSelector("#myCardsRowDiv.myCardsRowClass .cardCol .card")).size();
+                    System.out.println("round "+i+" has "+cardsInRound+" cards, player "+this.testPlayer.username);
+                    for (int j = 0; j < cardsInRound; j++) {
+                        if (j > 0) {
+                            try {
+                                final WebElement obsButton = shortWait.until(visibilityOfElementLocated(By.cssSelector("#openObserversButton.btn-warning")));
+                                obsButton.click();
+                                wait.until(visibilityOfElementLocated(By.id("observersModal")));
+                                final WebElement allowBtn = shortWait.until(visibilityOfElementLocated(By.cssSelector(".obs-allow-btn")));
+                                takeScreenshot("ROUND_"+i+"_CARD_"+(j+1)+"_ALLOW_OBSERVE_"+this.testPlayer.username);
+                                allowBtn.click();
+                                wait.until(visibilityOfElementLocated(By.id("closeObserveModalBtn"))).click();
+                            } catch (Throwable t) {
+                                // do nothing
+                            }
+                        }
+                        longWait.until(visibilityOfElementLocated(By.cssSelector("#myCardsRowDiv.myCardsRowClass .cardCol .activeCardInHand")));
+                        longWait.until(visibilityOfElementLocated(By.cssSelector("#playerTable0.thinking-green-div")));
+                        // takeScreenshot("ROUND_"+i+"_PLAY_CARD_"+(j+1)+"_"+this.testPlayer.username);
+                        List<WebElement> playableCards = driver.findElements(By.cssSelector("#myCardsRowDiv.myCardsRowClass .cardCol .activeCardInHand"));
+                        rand = ThreadLocalRandom.current().nextInt(0, playableCards.size());
+                        final String playedCardClass = playableCards.get(rand).getAttribute("class");
+                        System.out.println("round "+i+", card: "+(j+1)+", player "+this.testPlayer.username+" going to play "+playedCardClass);
+                        playableCards.get(rand).click();
+                        System.out.println("round "+i+", card: "+(j+1)+", player "+this.testPlayer.username+" played "+playedCardClass);
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
 
             // game should be now played and stats graph visible
             longWait.until(visibilityOfElementLocated(By.id("oneGameReportModalLabel")));
+
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
@@ -161,12 +207,14 @@ public class Player implements Runnable {
         shortWait = new WebDriverWait(driver, Duration.ofSeconds(2));
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         longWait = new WebDriverWait(driver, Duration.ofSeconds(60));
+        observeWait = new WebDriverWait(driver, Duration.ofSeconds(240));
     }
 
     private void initWebDriverToChrome() {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--window-size=1900x1200");
-        options.setHeadless(true);
+        options.addArguments("--incognito");
+//        options.setHeadless(true);
         try{
             driver = new ChromeDriver(options);
         } catch (final Exception e) {

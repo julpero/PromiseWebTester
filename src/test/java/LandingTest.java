@@ -420,7 +420,7 @@ public class LandingTest {
             Thread.sleep(5000);
             final Thread player3 = new Thread(new Player(testPlayers.get(2), gameUrl), "player3Thread");
             Thread.sleep(5000);
-            final Thread player4 = new Thread(new Player(testPlayers.get(3), gameUrl), "player4Thread");
+            final Thread player4 = new Thread(new Player(new TestPlayer("Demoilija", "demoTestaaja", true), gameUrl), "player4Thread");
             // Thread.sleep(5000);
             // final Thread player5 = new Thread(new Player(testPlayers.get(4), gameUrl), "player5Thread");
 
@@ -571,10 +571,10 @@ public class LandingTest {
     private List<TestPlayer> getTestPlayers() {
         List<TestPlayer> testPlayers = new ArrayList<TestPlayer>();
         testPlayers.add(new TestPlayer("Testaaja", "demoTestaaja"));
-        testPlayers.add(new TestPlayer("Demoilija", "demoTestaaja"));
-        testPlayers.add(new TestPlayer("E2E-kaveri", "demoTestaaja"));
+        // testPlayers.add(new TestPlayer("Demoilija", "demoTestaaja"));
+        // testPlayers.add(new TestPlayer("E2E-kaveri", "demoTestaaja"));
         testPlayers.add(new TestPlayer("KOM-puutteri", "demoTestaaja"));
-        // testPlayers.add(new TestPlayer("Aku Ankka", "demoTestaaja"));
+        testPlayers.add(new TestPlayer("Aku Ankka", "demoTestaaja"));
         return testPlayers;
     }
 
