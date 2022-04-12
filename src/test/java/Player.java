@@ -3,6 +3,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.io.FileHandler;
+import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -88,27 +89,7 @@ public class Player implements Runnable {
                 }
                 System.out.println("PLAYER "+this.testPlayer.username+" didn't found game to join!");
             } else if (this.testPlayer.observer) {
-                driver.findElement(By.id("openOngoingGamesDialogButton")).click();
-                wait.until(visibilityOfElementLocated(By.id("gamesContainerDiv")));
-                List<WebElement> onGoingGames = driver.findElements(By.className("onGoingGameRowStatus1"));
-                assertTrue(onGoingGames.size() > 0, "FAIL: no ongoing games");
-                for (int i = onGoingGames.size()-1; i >= 0; i--) {
-                    String playersStr = onGoingGames.get(i).findElement(By.className("report-players")).getText();
-                    if (playersStr.contains("Testaaja") && playersStr.contains("Aku Ankka") && playersStr.contains("KOM-puutteri")) {
-                        // first without username and password
-                        // onGoingGames.get(i).findElement(By.className("observeGameButton")).click();
-                        // wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv"))).getText().contains("Authentication error");
-
-                        shortWait.until(visibilityOfElementLocated(By.id("observerName"))).clear();
-                        shortWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys(this.testPlayer.username);
-                        shortWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
-                        shortWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys(this.testPlayer.password);
-                        onGoingGames.get(i).findElement(By.className("observeGameButton")).click();
-                        wait.until(visibilityOfElementLocated(By.id("waitingGameAlertDiv"))).getText().contains("Waiting players to allow");
-                        takeScreenshot("OBSERVE_REQUESTED_"+this.testPlayer.username);
-                        return;
-                    }
-                }
+                observeRequest();
             }
         } catch (Throwable t) {
             takeScreenshot("INIT_ERROR_"+this.testPlayer.username);
@@ -130,9 +111,27 @@ public class Player implements Runnable {
             if (this.testPlayer.observer) {
                 // just take some screenshots
                 for (int i = 0; i < rounds; i++) {
-                    observeWait.until(invisibilityOfElementLocated(By.cssSelector("#player0Points"+i+".avgHistory")));
-                    System.out.println("round "+i+" is observed");
-                    takeScreenshot("ROUND_"+i+"_OBSERVED_"+this.testPlayer.username);
+                    try {
+                        System.out.println("starting to observe round "+i+" by " + this.testPlayer.username);
+                        observeWait.until(invisibilityOfElementLocated(By.cssSelector("#player0Points"+i+".avgHistory")));
+                        System.out.println("round "+i+" is observed");
+                        takeScreenshot("ROUND_"+i+"_OBSERVED_"+this.testPlayer.username);
+                    } catch (UnhandledAlertException a) {
+                        System.out.println("round "+i+" and alert box is visible " + this.testPlayer.username);
+                        Alert alert = driver.switchTo().alert();
+                        final String alertText = alert.getText();
+                        assertTrue(alertText.contains("You have now left observing the game"));
+                        alert.accept();
+                        takeScreenshot("ROUND_"+i+"_OBSERVED_ALERT_"+this.testPlayer.username);
+
+                        // join again:
+                        driver.navigate().refresh();
+                        observeRequest();
+                        System.out.println("starting to observe again round "+i+" by " + this.testPlayer.username);
+                        observeWait.until(invisibilityOfElementLocated(By.cssSelector("#player0Points"+i+".avgHistory")));
+                        System.out.println("round "+i+" is observed");
+                        takeScreenshot("ROUND_"+i+"_OBSERVED_"+this.testPlayer.username);
+                    }
                 }
             } else {
                 for (int i = 0; i < rounds; i++) {
@@ -159,6 +158,19 @@ public class Player implements Runnable {
                                 final WebElement allowBtn = shortWait.until(visibilityOfElementLocated(By.cssSelector(".obs-allow-btn")));
                                 takeScreenshot("ROUND_"+i+"_CARD_"+(j+1)+"_ALLOW_OBSERVE_"+this.testPlayer.username);
                                 allowBtn.click();
+                                wait.until(visibilityOfElementLocated(By.id("closeObserveModalBtn"))).click();
+                            } catch (Throwable t) {
+                                // do nothing
+                            }
+                        }
+                        if (i == 1 && j == 0 && false) {
+                            try {
+                                final WebElement obsButton = shortWait.until(visibilityOfElementLocated(By.cssSelector("#openObserversButton.btn-success")));
+                                obsButton.click();
+                                wait.until(visibilityOfElementLocated(By.id("observersModal")));
+                                final WebElement denyBtn = shortWait.until(visibilityOfElementLocated(By.cssSelector(".obs-deny-btn")));
+                                takeScreenshot("ROUND_"+i+"_CARD_"+(j+1)+"_DENIED_OBSERVE_"+this.testPlayer.username);
+                                denyBtn.click();
                                 wait.until(visibilityOfElementLocated(By.id("closeObserveModalBtn"))).click();
                             } catch (Throwable t) {
                                 // do nothing
@@ -214,7 +226,8 @@ public class Player implements Runnable {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--window-size=1900x1200");
         options.addArguments("--incognito");
-//        options.setHeadless(true);
+        options.setCapability(CapabilityType.UNEXPECTED_ALERT_BEHAVIOUR, UnexpectedAlertBehaviour.IGNORE);
+        // options.setHeadless(true);
         try{
             driver = new ChromeDriver(options);
         } catch (final Exception e) {
@@ -232,6 +245,41 @@ public class Player implements Runnable {
             FileHandler.copy(src, new File(pathname));
         } catch (IOException i) {
             System.out.println("Screenshot error: " + i);
+        }
+    }
+
+    private void observeRequest() {
+        try {
+            driver.findElement(By.id("openOngoingGamesDialogButton")).click();
+            wait.until(visibilityOfElementLocated(By.id("gamesContainerDiv")));
+            List<WebElement> onGoingGames = driver.findElements(By.className("onGoingGameRowStatus1"));
+            assertTrue(onGoingGames.size() > 0, "FAIL: no ongoing games");
+            for (int i = onGoingGames.size()-1; i >= 0; i--) {
+                String playersStr = onGoingGames.get(i).findElement(By.className("report-players")).getText();
+                if (playersStr.contains("Testaaja") && playersStr.contains("Aku Ankka") && playersStr.contains("KOM-puutteri")) {
+                    Actions actions = new Actions(driver);
+
+                    // first without username and password
+                    final WebElement obsButton = onGoingGames.get(i).findElement(By.className("observeGameButton"));
+                    actions.moveToElement(obsButton);
+                    //obsButton.click();
+                    //final String errorTxt = wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv"))).getText();
+                    //assertTrue(errorTxt.contains("Authentication error"), "FAIL: no auth error");
+
+                    shortWait.until(visibilityOfElementLocated(By.id("observerName"))).clear();
+                    shortWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys(this.testPlayer.username);
+                    shortWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
+                    shortWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys(this.testPlayer.password);
+                    actions.moveToElement(obsButton);
+                    obsButton.click();
+                    final String waitingText = wait.until(visibilityOfElementLocated(By.id("waitingGameAlertDiv"))).getText();
+                    assertTrue(waitingText.contains("Waiting players to allow"), "FAIL: no waiting text");
+                    takeScreenshot("OBSERVE_REQUESTED_"+this.testPlayer.username);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            throw t;
         }
     }
 }
