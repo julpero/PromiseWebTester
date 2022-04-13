@@ -32,7 +32,7 @@ public class LandingTest {
     private String adminPass = "";
     
     final private String gameUrl = "http://localhost:3000";
-    //final private String gameUrl = "https://promiseweb.azurewebsites.net";
+//    final private String gameUrl = "https://promiseweb.azurewebsites.net";
 
     @Test
     public void TestLandingPage() {

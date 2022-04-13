@@ -126,9 +126,15 @@ public class Player implements Runnable {
 
                         // join again:
                         driver.navigate().refresh();
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         observeRequest();
-                        System.out.println("starting to observe again round "+i+" by " + this.testPlayer.username);
+                        longWait.until(visibilityOfElementLocated(By.className("scoreboardTableRow")));
                         observeWait.until(invisibilityOfElementLocated(By.cssSelector("#player0Points"+i+".avgHistory")));
+                        System.out.println("starting to observe again round "+i+" by " + this.testPlayer.username);
                         System.out.println("round "+i+" is observed");
                         takeScreenshot("ROUND_"+i+"_OBSERVED_"+this.testPlayer.username);
                     }
@@ -152,27 +158,33 @@ public class Player implements Runnable {
                     for (int j = 0; j < cardsInRound; j++) {
                         if (j > 0) {
                             try {
+                                System.out.println("check if there is observer waiting and accept if exists round "+i+" and card "+(j+1)+" "+this.testPlayer.username);
                                 final WebElement obsButton = shortWait.until(visibilityOfElementLocated(By.cssSelector("#openObserversButton.btn-warning")));
                                 obsButton.click();
                                 wait.until(visibilityOfElementLocated(By.id("observersModal")));
                                 final WebElement allowBtn = shortWait.until(visibilityOfElementLocated(By.cssSelector(".obs-allow-btn")));
                                 takeScreenshot("ROUND_"+i+"_CARD_"+(j+1)+"_ALLOW_OBSERVE_"+this.testPlayer.username);
                                 allowBtn.click();
+                                System.out.println("observer accepted round "+i+" and card "+(j+1)+" "+this.testPlayer.username);
                                 wait.until(visibilityOfElementLocated(By.id("closeObserveModalBtn"))).click();
                             } catch (Throwable t) {
+                                System.out.println("no OBS button enabled round "+i+" and card "+(j+1)+" "+this.testPlayer.username);
                                 // do nothing
                             }
                         }
-                        if (i == 1 && j == 0 && false) {
+                        if (i == 1 && j == 0) {
                             try {
+                                System.out.println("check if there is observer and deny if exists round "+i+" and card "+(j+1)+" "+this.testPlayer.username);
                                 final WebElement obsButton = shortWait.until(visibilityOfElementLocated(By.cssSelector("#openObserversButton.btn-success")));
                                 obsButton.click();
                                 wait.until(visibilityOfElementLocated(By.id("observersModal")));
                                 final WebElement denyBtn = shortWait.until(visibilityOfElementLocated(By.cssSelector(".obs-deny-btn")));
                                 takeScreenshot("ROUND_"+i+"_CARD_"+(j+1)+"_DENIED_OBSERVE_"+this.testPlayer.username);
                                 denyBtn.click();
+                                System.out.println("observer denied round "+i+" and card "+(j+1)+" "+this.testPlayer.username);
                                 wait.until(visibilityOfElementLocated(By.id("closeObserveModalBtn"))).click();
                             } catch (Throwable t) {
+                                System.out.println("checking of observer and denying fails round "+i+" and card "+(j+1)+" "+this.testPlayer.username);
                                 // do nothing
                             }
                         }
@@ -274,6 +286,7 @@ public class Player implements Runnable {
                     obsButton.click();
                     final String waitingText = wait.until(visibilityOfElementLocated(By.id("waitingGameAlertDiv"))).getText();
                     assertTrue(waitingText.contains("Waiting players to allow"), "FAIL: no waiting text");
+                    System.out.println("starting to wait observing allowance " + this.testPlayer.username);
                     takeScreenshot("OBSERVE_REQUESTED_"+this.testPlayer.username);
                     return;
                 }
