@@ -88,7 +88,7 @@ public class Player implements Runnable {
                     }
                 }
                 System.out.println("PLAYER "+this.testPlayer.username+" didn't found game to join!");
-            } else if (this.testPlayer.observer) {
+            } else {
                 observeRequest();
             }
         } catch (Throwable t) {

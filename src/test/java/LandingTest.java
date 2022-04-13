@@ -129,14 +129,14 @@ public class LandingTest {
 
             boolean nickChangeTest = false;
             String nickChangeId = "";
-            for (int i = 0; i < gameContainerDivs.size(); i++) {
-                if (gameContainerDivs.get(i).findElement(By.className("report-players")).getText().contains("E2E-kaveri")) {
+            for (WebElement gameContainerDiv : gameContainerDivs) {
+                if (gameContainerDiv.findElement(By.className("report-players")).getText().contains("E2E-kaveri")) {
                     nickChangeTest = true;
-                    nickChangeId = gameContainerDivs.get(i).findElement(By.className("report-players")).getAttribute("id");
-                    gameContainerDivs.get(i).findElement(By.className("oldNameInput")).sendKeys("E2E-kaveri");
-                    gameContainerDivs.get(i).findElement(By.className("newNameInput")).sendKeys("E2E-frendi");
+                    nickChangeId = gameContainerDiv.findElement(By.className("report-players")).getAttribute("id");
+                    gameContainerDiv.findElement(By.className("oldNameInput")).sendKeys("E2E-kaveri");
+                    gameContainerDiv.findElement(By.className("newNameInput")).sendKeys("E2E-frendi");
                     System.out.println("Change nick in game: " + nickChangeId);
-                    gameContainerDivs.get(i).findElement(By.className("change-nick-button")).click();
+                    gameContainerDiv.findElement(By.className("change-nick-button")).click();
                     break;
                 }
             }
@@ -182,15 +182,15 @@ public class LandingTest {
             longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
             List<WebElement> notStartedGames = driver.findElements(By.className("onGoingGameRowStatus0"));
             boolean gameFound = false;
-            String gameId = "";
-            for (int i = 0; i < notStartedGames.size(); i++) {
-                final String players = notStartedGames.get(i).findElement(By.className("report-players")).getText();
+            String gameId;
+            for (WebElement notStartedGame : notStartedGames) {
+                final String players = notStartedGame.findElement(By.className("report-players")).getText();
                 if (players.contains("Testaaja")) {
                     gameFound = true;
-                    gameId = notStartedGames.get(i).getAttribute("id");
+                    gameId = notStartedGame.getAttribute("id");
 
                     // no user - pass set
-                    notStartedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    notStartedGame.findElement(By.className("totalDeleteGameButton")).click();
                     wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
 
                     // try with nonsense
@@ -198,7 +198,7 @@ public class LandingTest {
                     longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys("juupaduupa");
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys("juupaduupa");
-                    notStartedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    notStartedGame.findElement(By.className("totalDeleteGameButton")).click();
                     wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
 
                     // correct credentials
@@ -207,16 +207,16 @@ public class LandingTest {
                     longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys(this.adminUser);
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys(this.adminPass);
-                    notStartedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    notStartedGame.findElement(By.className("totalDeleteGameButton")).click();
 
                     // check that deleted game is no more visible
                     Thread.sleep(5000);
                     longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
                     List<WebElement> allGames = driver.findElements(By.className("onGoingGameRow"));
-                    for (int j = 0; j < allGames.size(); j++) {
-                        final String gameId2 = allGames.get(j).getAttribute("id");
+                    for (WebElement allGame : allGames) {
+                        final String gameId2 = allGame.getAttribute("id");
                         assertNotEquals(gameId, gameId2, "FAIL: found deleted game!");
-                        System.out.println("Deleted game "+gameId);
+                        System.out.println("Deleted game " + gameId);
                     }
                     break;
                 }
@@ -252,15 +252,15 @@ public class LandingTest {
             longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
             List<WebElement> ongoingGames = driver.findElements(By.className("onGoingGameRowStatus1"));
             boolean gameFound = false;
-            String gameId = "";
-            for (int i = 0; i < ongoingGames.size(); i++) {
-                final String players = ongoingGames.get(i).findElement(By.className("report-players")).getText();
+            String gameId;
+            for (WebElement ongoingGame : ongoingGames) {
+                final String players = ongoingGame.findElement(By.className("report-players")).getText();
                 if (players.contains("Testaaja")) {
                     gameFound = true;
-                    gameId = ongoingGames.get(i).getAttribute("id");
+                    gameId = ongoingGame.getAttribute("id");
 
                     // no user - pass set
-                    ongoingGames.get(i).findElement(By.className("deleteGameButton")).click();
+                    ongoingGame.findElement(By.className("deleteGameButton")).click();
                     wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
 
                     // try with nonsense
@@ -268,7 +268,7 @@ public class LandingTest {
                     longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys("juupaduupa");
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys("juupaduupa");
-                    ongoingGames.get(i).findElement(By.className("deleteGameButton")).click();
+                    ongoingGame.findElement(By.className("deleteGameButton")).click();
                     wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
 
                     // correct credentials
@@ -277,22 +277,22 @@ public class LandingTest {
                     longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys(this.adminUser);
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys(this.adminPass);
-                    ongoingGames.get(i).findElement(By.className("deleteGameButton")).click();
+                    ongoingGame.findElement(By.className("deleteGameButton")).click();
 
                     // check that deleted game is now on dismissed games list
                     Thread.sleep(5000);
                     longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
                     List<WebElement> dismissedGames = driver.findElements(By.className("onGoingGameRowStatus99"));
                     boolean gameFoundAsDismissed = false;
-                    for (int j = 0; j < dismissedGames.size(); j++) {
-                        final String gameId2 = dismissedGames.get(j).getAttribute("id");
+                    for (WebElement dismissedGame : dismissedGames) {
+                        final String gameId2 = dismissedGame.getAttribute("id");
                         if (gameId2.equals(gameId)) {
                             gameFoundAsDismissed = true;
                             break;
                         }
                     }
                     assertTrue(gameFoundAsDismissed, "FAIL: didn't found game from dismissed games list!");
-                    System.out.println("Dismissed game "+gameId);
+                    System.out.println("Dismissed game " + gameId);
                     break;
                 }
             }
@@ -327,15 +327,15 @@ public class LandingTest {
             longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
             List<WebElement> dismissedGames = driver.findElements(By.className("onGoingGameRowStatus99"));
             boolean gameFound = false;
-            String gameId = "";
-            for (int i = 0; i < dismissedGames.size(); i++) {
-                final String players = dismissedGames.get(i).findElement(By.className("report-players")).getText();
+            String gameId;
+            for (WebElement dismissedGame : dismissedGames) {
+                final String players = dismissedGame.findElement(By.className("report-players")).getText();
                 if (players.contains("Testaaja")) {
                     gameFound = true;
-                    gameId = dismissedGames.get(i).getAttribute("id");
+                    gameId = dismissedGame.getAttribute("id");
 
                     // no user - pass set
-                    dismissedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    dismissedGame.findElement(By.className("totalDeleteGameButton")).click();
                     wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
 
                     // try with nonsense
@@ -343,7 +343,7 @@ public class LandingTest {
                     longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys("juupaduupa");
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys("juupaduupa");
-                    dismissedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    dismissedGame.findElement(By.className("totalDeleteGameButton")).click();
                     wait.until(visibilityOfElementLocated(By.id("authOngoingGamesAlertDiv")));
 
                     // correct credentials
@@ -352,17 +352,17 @@ public class LandingTest {
                     longWait.until(visibilityOfElementLocated(By.id("observerName"))).sendKeys(this.adminUser);
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).clear();
                     longWait.until(visibilityOfElementLocated(By.id("observerPass"))).sendKeys(this.adminPass);
-                    dismissedGames.get(i).findElement(By.className("totalDeleteGameButton")).click();
+                    dismissedGame.findElement(By.className("totalDeleteGameButton")).click();
 
                     // check that deleted game is no more visible
                     Thread.sleep(5000);
                     longWait.until(visibilityOfElementLocated(By.className("onGoingGameRow")));
                     List<WebElement> allGames = driver.findElements(By.className("onGoingGameRow"));
-                    for (int j = 0; j < allGames.size(); j++) {
-                        final String gameId2 = allGames.get(j).getAttribute("id");
+                    for (WebElement allGame : allGames) {
+                        final String gameId2 = allGame.getAttribute("id");
                         assertNotEquals(gameId, gameId2, "FAIL: found deleted game!");
                     }
-                    System.out.println("Deleted game "+gameId);
+                    System.out.println("Deleted game " + gameId);
                     break;
                 }
             }
@@ -394,7 +394,7 @@ public class LandingTest {
 
             List<TestPlayer> testPlayers = getTestPlayers();
             CreateBaseGame(testPlayers.get(0));
-            LeaveBaseGame(testPlayers.get(0));
+            LeaveBaseGame();
 
             System.out.println("CreateAndLeaveGame SUCCESS");
         } catch (Throwable t) {
@@ -508,7 +508,7 @@ public class LandingTest {
         }
     }
 
-    private void LeaveBaseGame(TestPlayer testPlayer) {
+    private void LeaveBaseGame() {
         try {
             List<WebElement> games = driver.findElements(By.className("gameContainerDiv"));
             if (games.size() == 0) {
@@ -522,8 +522,7 @@ public class LandingTest {
                 }
                 games = driver.findElements(By.className("gameContainerRow"));
                 assertTrue(games.size() > 0, "FAIL: No open games!");
-                for (int i = 0; i < games.size(); i++) {
-                    WebElement gameRow = games.get(i);
+                for (WebElement gameRow : games) {
                     if (gameRow.findElement(By.className("leaveThisGameButton")).isEnabled()) {
                         gameRow.findElement(By.className("leaveThisGameButton")).click();
                         return;
@@ -569,7 +568,7 @@ public class LandingTest {
     }
 
     private List<TestPlayer> getTestPlayers() {
-        List<TestPlayer> testPlayers = new ArrayList<TestPlayer>();
+        List<TestPlayer> testPlayers = new ArrayList<>();
         testPlayers.add(new TestPlayer("Testaaja", "demoTestaaja"));
         // testPlayers.add(new TestPlayer("Demoilija", "demoTestaaja"));
         // testPlayers.add(new TestPlayer("E2E-kaveri", "demoTestaaja"));
